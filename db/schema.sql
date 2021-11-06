@@ -9,7 +9,7 @@ USE company;
 
 CREATE TABLE department (
     id INTEGER PRIMARY KEY AUTO_INCREMENT,
-    name VARCHAR(30) NOT NULL
+    dep_name VARCHAR(30) NOT NULL
 );
 
 CREATE TABLE position (
@@ -26,5 +26,3 @@ CREATE TABLE employee (
     position_id INTEGER,
     manager_id INTEGER
 );
-
-

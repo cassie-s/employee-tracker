@@ -112,7 +112,7 @@ const promptUser = () => {
         
 showDepartments = () => {
     console.log('Showing all departments...\n');
-    var query = `SELECT department.id, department.name AS department FROM department`;
+    var query = `SELECT department.id, department.dep_name AS department FROM department`;
 
     connection.query(query, function (err, res) {
         if (err) throw err;
@@ -125,7 +125,7 @@ showDepartments = () => {
 
 showPositions = () => {
     console.log('Showing all positions...\n');
-    var query = `SELECT position.id, position.title AS positions, department.name as department
+    var query = `SELECT position.id, position.title AS positions, department.dep_name as department
                 FROM position
                 INNER JOIN department ON position.department_id = department.id`;
 
@@ -144,7 +144,7 @@ showEmployees = () => {
                 employee.first_name, 
                 employee.last_name, 
                 position.title, 
-                department.name AS department,
+                department.dep_name AS department,
                 position.salary, 
                 CONCAT (manager.first_name, " ", manager.last_name) AS manager
                 FROM employee
@@ -178,7 +178,7 @@ addDepartment = () => {
         }
     ])
         .then(answer => {
-            var query = `INSERT INTO department (name)
+            var query = `INSERT INTO department (dep_name)
                         VALUES (?)`;
             connection.query(query, answer.addDept, (err, result) => {
                 if (err) throw err;
@@ -193,7 +193,7 @@ addPosition = () => {
     inquirer.prompt([
         {
             type: 'input',
-            name: 'addPos',
+            name: 'position',
             message: 'What position do you want to add?',
             validate: addPos => {
                 if (addPos) {
@@ -203,39 +203,57 @@ addPosition = () => {
                     return false;
                 }
             }
+        },
+        {
+            type: 'input',
+            name: 'salary',
+            message: 'What is the salary of this role?',
+            validate: addSalary => {
+                if (addSalary) {
+                    return true;
+                } else {
+                    console.log('Please enter a salary.');
+                }
+            }
         }
     ])
         .then(answer => {
-            var query = `INSERT INTO position (title) 
-                        VALUES (?)`;
-            connection.query(query, answer.addPos, (err, result) => {
-                if (err) throw err;
-                console.log('Added ' + answer.addPos + ' to postions!')
+            const params = [answer.position, answer.salary];
 
-                addPosSalary();
-                });
-            });
+            const positionSql = `SELECT dep_name, id FROM department`;
+
+            connection.promise().query(positionSql, (err, data) => {
+                if (err) throw err; 
+            
+                const dept = data.map(({ dep_name, id }) => ({ name: dep_name, value: id }));
+        
+                inquirer.prompt([
+                {
+                  type: 'list', 
+                  name: 'dept',
+                  message: "What department is this role in?",
+                  choices: [
+                        'Sales',
+                        'Marketing',
+                        'IT',
+                        'Finance',
+                  ]
+                }
+                ])
+                  .then(deptChoice => {
+                    const dept = deptChoice.dept;
+                    params.push(dept);
+        
+                    const sql = `INSERT INTO position (title, salary, department_id)
+                                VALUES (?, ?, ?)`;
+        
+                    connection.query(sql, params, (err, result) => {
+                      if (err) throw err;
+                      console.log('Added' + answer.position + " to positions!"); 
+        
+                      showPositions();
+               });
+             });
+           });
+         });
         };
-
-addPosSalary = () => {
-    inquirer.prompt([
-        {
-            type: 'input',
-            name: 'addSalary',
-            message: 'What is the salary of this position?',
-        }])
-        .then(answer => {
-            var query = `INSERT INTO position (salary)
-                        VALUES (?)`;
-            connection.query(query, answer.addSalary, (err, result) => {
-                if (err) throw err;
-                console.log('Added ' + answer.addSalary + ' to postion salary!')
-
-                showPositions();
-                })
-            });
-        };
-
-
-
-
