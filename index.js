@@ -193,7 +193,7 @@ addPosition = () => {
     inquirer.prompt([
         {
             type: 'input',
-            name: 'position',
+            name: 'addPos',
             message: 'What position do you want to add?',
             validate: addPos => {
                 if (addPos) {
@@ -206,54 +206,38 @@ addPosition = () => {
         },
         {
             type: 'input',
-            name: 'salary',
+            name: 'addSalary',
             message: 'What is the salary of this role?',
             validate: addSalary => {
                 if (addSalary) {
                     return true;
                 } else {
-                    console.log('Please enter a salary.');
+                    console.log('Please enter a salary!');
                 }
             }
-        }
-    ])
-        .then(answer => {
-            const params = [answer.position, answer.salary];
-
-            const positionSql = `SELECT dep_name, id FROM department`;
-
-            connection.promise().query(positionSql, (err, data) => {
-                if (err) throw err; 
-            
-                const dept = data.map(({ dep_name, id }) => ({ name: dep_name, value: id }));
-        
-                inquirer.prompt([
-                {
-                  type: 'list', 
-                  name: 'dept',
-                  message: "What department is this role in?",
-                  choices: [
-                        'Sales',
-                        'Marketing',
-                        'IT',
-                        'Finance',
-                  ]
-                }
-                ])
-                  .then(deptChoice => {
-                    const dept = deptChoice.dept;
-                    params.push(dept);
-        
-                    const sql = `INSERT INTO position (title, salary, department_id)
-                                VALUES (?, ?, ?)`;
-        
-                    connection.query(sql, params, (err, result) => {
-                      if (err) throw err;
-                      console.log('Added' + answer.position + " to positions!"); 
-        
-                      showPositions();
-               });
-             });
-           });
-         });
+        },
+        {
+              type: 'list', 
+              name: 'addDept',
+              message: "What department is this role in?",
+              choices: [
+                    1,
+                    2,
+                    3,
+                    4
+              ]
+            }
+        ])
+            .then(answer => {
+                const params = [answer.addPos, answer.addSalary, answer.addDept];
+                var query = `INSERT INTO position (title, salary, department_id)
+                            VALUES (?, ?, ?)`;
+                connection.query(query, params, (err, result) => {
+                    if (err) throw err;
+                    console.log('Added position!')
+    
+                    showPositions();
+                });
+            });
         };
+    
